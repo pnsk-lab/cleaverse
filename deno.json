@@ -1,0 +1,9 @@
+{
+  "workspace": [
+    "./packages/sdk"
+  ],
+  "fmt": {
+    "singleQuote": true,
+    "semiColons": false
+  }
+}
