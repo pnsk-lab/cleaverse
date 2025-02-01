@@ -1,9 +1,13 @@
 {
   "workspace": [
-    "./packages/sdk"
+    "./packages/cleaverse",
+    "./packages/nostr-connection"
   ],
   "fmt": {
     "singleQuote": true,
     "semiColons": false
+  },
+  "imports": {
+    "@ns/ikox": "jsr:@ns/ikox@^0.2.3"
   }
 }

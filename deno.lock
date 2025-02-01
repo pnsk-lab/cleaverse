@@ -1,0 +1,16 @@
+{
+  "version": "4",
+  "specifiers": {
+    "jsr:@ns/ikox@~0.2.3": "0.2.3"
+  },
+  "jsr": {
+    "@ns/ikox@0.2.3": {
+      "integrity": "fb2f2f8ae4c2234cb848df6de0c5954ac55cd4a011e869ac0817fee9922ab34a"
+    }
+  },
+  "workspace": {
+    "dependencies": [
+      "jsr:@ns/ikox@~0.2.3"
+    ]
+  }
+}
