@@ -1,0 +1,10 @@
+{
+    "name": "@pnsk-lab/cleaverse-nostr",
+    "version": "0.1.0",
+    "exports": {
+        ".": "./src/mod.ts"
+    },
+    "imports": {
+        "nostr-tools": "npm:nostr-tools@^2.10.4"
+    }
+}

@@ -1,7 +1,7 @@
 {
   "workspace": [
     "./packages/cleaverse",
-    "./packages/nostr-connection"
+    "./packages/nostr"
   ],
   "fmt": {
     "singleQuote": true,

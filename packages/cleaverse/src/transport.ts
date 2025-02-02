@@ -5,8 +5,10 @@
 
 import type { SignedMessage } from './types.ts'
 
-interface MessageEventListener extends EventListener {
-  (ev: MessageEvent<SignedMessage>): void
+
+interface EventMap {
+  message: MessageEvent<SignedMessage>
+  close: Event
 }
 
 export type ConnectionReadyState = 'OPEN' | 'CLOSED'
@@ -19,10 +21,8 @@ export abstract class Connection extends EventTarget {
 
   abstract readyState: ConnectionReadyState
 
-  override addEventListener(type: 'message', listener: MessageEventListener | null): void
-  override addEventListener(type: 'close', listener: EventListener | null): void
-  override addEventListener(type: string, listener: EventListener | null): void {
-    super.addEventListener(type, listener)
+  override addEventListener<T extends keyof EventMap>(type: T , listener: (ev: EventMap[T]) => void): void {
+    super.addEventListener(type, listener as EventListener)
   }
 }
 
@@ -42,14 +42,16 @@ export class Transport extends EventTarget {
    */
   addConnection(connection: Connection) {
     this.#connections.add(connection)
+
     connection.addEventListener('message', (evt) => {
-      this.dispatchEvent(evt)
+      super.dispatchEvent(new MessageEvent('message', {
+        data: evt.data
+      }))
     })
   }
 
-  override addEventListener(type: 'message', listener: MessageEventListener | null): void
-  override addEventListener(type: string, listener: EventListener | null): void {
-    super.addEventListener(type, listener)
+  override addEventListener<T extends keyof EventMap>(type: T, listener: ((ev: EventMap[T]) => void) | null): void {
+    super.addEventListener(type, listener as EventListener)
   }
 
   async send(message: SignedMessage): Promise<void> {

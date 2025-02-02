@@ -1,7 +1,9 @@
 import { Cleaverse } from '@pnsk-lab/cleaverse'
-import { connectWSClient } from '@pnsk-lab/cleaverse/ws-client'
+import { connectNostr } from '@pnsk-lab/cleaverse-nostr'
 
 const cleaverse = new Cleaverse()
-cleaverse.transport.addConnection(await connectWSClient('ws://localhost:8080'))
+cleaverse.transport.addConnection(await connectNostr([
+  'wss://relay.snort.social/'
+]))
 
 const bot = await cleaverse.createBot()

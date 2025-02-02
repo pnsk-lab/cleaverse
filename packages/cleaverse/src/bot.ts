@@ -11,6 +11,11 @@ export class Bot {
   constructor(keyPair: CryptoKeyPair, cleaverse: Cleaverse) {
     this.#keyPair = keyPair
     this.#cleaverse = cleaverse
+    cleaverse.transport.addEventListener('message', this.#subscribeFn)
+  }
+
+  #subscribeFn = (evt: MessageEvent<SignedMessage>) => {
+    console.log(evt.data)
   }
 
   #cachedPublicKey?: Uint8Array
