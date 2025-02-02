@@ -7,7 +7,7 @@ import { parseTextIntoSignedMessage } from './connections/shared.ts'
 import type { SignedMessage, UncompressedMessage } from './types.ts'
 
 interface EventMap {
-  message: MessageEvent<SignedMessage>
+  message: MessageEvent<UncompressedMessage>
   close: Event
 }
 

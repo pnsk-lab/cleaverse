@@ -1,15 +1,15 @@
-import type { Cleaverse } from './cleaverse.ts'
 import uint8Array_base64 from '@ns/ikox/uint8array-base64'
 import base64_uint8array from '@ns/ikox/base64-uint8array'
 import uintArray_hex from '@ns/ikox/uint8array-hex'
 import type { Pos, SignedMessage } from './types.ts'
 import type { BaseEvent, CleaverseEvent } from './events.ts'
+import type { Transport } from './transport.ts'
 
 const encoder = new TextEncoder()
 const decoder = new TextDecoder()
 
 interface BotInit {
-  cleaverse: Cleaverse
+  transport: Transport
   keyPair: CryptoKeyPair
   pos: Pos
 }
@@ -21,18 +21,13 @@ export interface SerializedBot {
 
 export class Bot {
   #keyPair: CryptoKeyPair
-  #cleaverse: Cleaverse
+  #transport: Transport
   #pos: [x: number, y: number]
   #lastPosSent: number = 0
-  constructor({ keyPair, cleaverse, pos }: BotInit) {
+  constructor({ keyPair, transport, pos }: BotInit) {
     this.#keyPair = keyPair
-    this.#cleaverse = cleaverse
+    this.#transport = transport
     this.#pos = pos
-    cleaverse.transport.addEventListener('message', this.#subscribeFn)
-  }
-
-  #subscribeFn = (evt: MessageEvent<SignedMessage>) => {
-    console.log(evt.data)
   }
 
   async #sendMove() {
@@ -97,7 +92,7 @@ export class Bot {
     }
   }
   async sendEvent(message: (BaseEvent & {}) | CleaverseEvent) {
-    return await this.#cleaverse.transport.send(await this.signEvent(message))
+    return await this.#transport.send(await this.signEvent(message))
   }
 
   async serialize(): Promise<SerializedBot> {
@@ -109,9 +104,18 @@ export class Bot {
       privateKey,
     }
   }
+
+  async startService() {
+    const started = Date.now()
+    this.#transport.addEventListener('message', ({ data: msg }) => {
+      if (msg.uncompressed.createdAt < started) {
+        return
+      }
+    })
+  }
 }
 
-export const importBot = async (serialized: SerializedBot, cleaverse: Cleaverse) => {
+export const importBot = async (serialized: SerializedBot, transport: Transport) => {
   const privateKey = await crypto.subtle.importKey(
     'pkcs8',
     base64_uint8array(serialized.privateKey),
@@ -137,13 +141,13 @@ export const importBot = async (serialized: SerializedBot, cleaverse: Cleaverse)
       publicKey,
       privateKey
     },
-    cleaverse,
+    transport,
     pos: [0, 0]
   })
   return bot
 }
 
-export const createBot = async (cleaverse: Cleaverse) => {
+export const createBot = async (transport: Transport) => {
   const keyPair = await crypto.subtle.generateKey(
     {
       name: 'ECDSA',
@@ -154,7 +158,7 @@ export const createBot = async (cleaverse: Cleaverse) => {
   )
   const bot = new Bot({
     keyPair,
-    cleaverse,
+    transport,
     pos: [0, 0]
   })
 
