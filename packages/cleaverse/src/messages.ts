@@ -3,7 +3,11 @@ export interface BaseMessage {
 }
 
 export interface BotCreatedMessage extends BaseMessage {
-  type: 'cleaverse.world.bot.created'
+  type: 'cleaverse.bot.created'
+}
+export interface WorldBotMoveMessage extends BaseMessage {
+  type: 'cleaverse.world.bot.move'
+  pos: [x: number, y: number]
 }
 
-export type CleaverseMessage = BotCreatedMessage
+export type CleaverseMessage = BotCreatedMessage | WorldBotMoveMessage

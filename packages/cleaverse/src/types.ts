@@ -3,3 +3,4 @@ export interface SignedMessage {
   signature: string
   from: string
 }
+export type Pos = [x: number, y: number]

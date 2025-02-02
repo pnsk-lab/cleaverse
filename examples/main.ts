@@ -6,4 +6,5 @@ cleaverse.transport.addConnection(await connectNostr([
   'wss://relay.snort.social/'
 ]))
 
-const bot = await cleaverse.createBot()
+//const bot = await cleaverse.createBot()
+
