@@ -1,6 +1,5 @@
 import { Connection, type ConnectionReadyState } from '../transport.ts'
 import type { SignedMessage } from '../types.ts'
-import { parseTextIntoSignedMessage } from './shared.ts'
 
 class WSClient extends Connection {
   #ws: WebSocket
@@ -15,11 +14,7 @@ class WSClient extends Connection {
     })
     ws.addEventListener('message', (event) => {
       const data = event.data
-      const parsed = parseTextIntoSignedMessage(data)
-      if (!parsed) {
-        return
-      }
-      this.dispatchEvent(new MessageEvent('message', { data }))
+      this.receiveJSON(data)
     })
   }
 

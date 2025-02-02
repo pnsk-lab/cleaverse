@@ -3,8 +3,8 @@
  * @module
  */
 
-import type { SignedMessage } from './types.ts'
-
+import { parseTextIntoSignedMessage } from './connections/shared.ts'
+import type { SignedMessage, UncompressedMessage } from './types.ts'
 
 interface EventMap {
   message: MessageEvent<SignedMessage>
@@ -20,6 +20,18 @@ export abstract class Connection extends EventTarget {
   abstract close(): Promise<void>
 
   abstract readyState: ConnectionReadyState
+
+  receiveJSON (json: string) {
+    const parsed = parseTextIntoSignedMessage(json)
+    if (!parsed) {
+      return
+    }
+    const uncompressed: UncompressedMessage = {
+      uncompressed: JSON.parse(parsed.event),
+      ...parsed
+    }
+    this.dispatchEvent(new MessageEvent('message', { data: uncompressed }))
+  }
 
   override addEventListener<T extends keyof EventMap>(type: T , listener: (ev: EventMap[T]) => void): void {
     super.addEventListener(type, listener as EventListener)

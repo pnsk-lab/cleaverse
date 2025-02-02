@@ -19,13 +19,7 @@ class NostrConnection extends Connection {
         switch (parsed[0]) {
           case 'EVENT': {
             const [_eventName, _subId, event] = parsed
-            const data = parseTextIntoSignedMessage(event.content)
-            if (!data) {
-              return
-            }
-            this.dispatchEvent(new MessageEvent<SignedMessage>('message', {
-              data
-            }))
+            this.receiveJSON(event.content)
             break
           }
         }
