@@ -86,11 +86,121 @@ Nostr を用いると、リレーを介すことによりクライアント同�
 
 ## 4. ワールドの管理
 
-### 4.1. Chunk
+### 4.1. Block
+### 4.2. Chunk
+
+#### 4.2.1. Chunk の定義
 
 ワールドは、16*16 の Chunk に分割されます。Chunk には、Block が含まれます。
+チャンクは座標を持ちます。チャンクの座標 $\boldsymbol{C}$ は、ワールド上の座標 $\boldsymbol{P}$ から、以下のように求めることができます。
+```math
+\begin{pmatrix} \boldsymbol{C}_x \\ \boldsymbol{C}_y \end{pmatrix}
+=
+\begin{pmatrix} \lfloor \frac{1}{16}\boldsymbol{P}_x \rfloor \\ \lfloor \frac{1}{16}\boldsymbol{P}_y \rfloor \end{pmatrix}
+```
 
+#### 4.2.2. Chunk の表現
 
-### 4.2 Block
+Chunk に存在するブロックは、以下のスキーマで表現されます。
+```ts
+type ChunkBlocks = Block[][]
+```
+これは (16, 16) のマトリックスです。(x, y) で表現されます。
+
+また、現在のチャンクの状態は以下のスキーマで定義されます:
+```ts
+interface Chunk {
+  blocks: ChunkBlocks
+}
+```
+
+#### 4.2.3. チャンクの取得
+
+最新のチャンクを取得するには、以下のイベントを送ります。
+```ts
+interface ChunkGetRequestEvent {
+  type: 'cleaverse.world.chunk.meta.request'
+  chunk: [x: number, y: number] // チャンクの座標
+}
+```
+結果は、以下のように送信されます。
+```ts
+interface ChunkGetRequestEvent {
+  type: 'cleaverse.world.chunk.meta.data'
+  chunk: [x: number, y: number] // チャンクの座標
+  version: number
+  hash: string // SHA256 されたチャンクのデータ
+}
+```
+
+さまざまなピアから送られたチャンクのデータを集計して、本物のチャンクのデータを計算します。
+まず、version と hash のペアの個数を計算します。個数をかけるときには、送信してきた Bot のレピュテーションスコアを重みとして書けます。
+最も多い version と hash のペアを本物のチャンクとします。
+
+本物のチャンクの version で、異なる hash を送ってきた Bot は、不正とみなします。
+
+hash からチャンクを取得するには、以下のイベントを利用します:
+```ts
+interface ChunkRequest {
+  type: 'cleaverse.world.chunk.request'
+  hash: string
+}
+```
+結果は、以下のようなイベントで送信してください。
+```ts
+interface ChunkData {
+  type: 'cleaverse.world.chunk.data'
+  hash: string
+  chunk: Chunk
+}
+```
+
+#### 4.2.4. チャンクの変更
+
+チャンクに存在するブロックは変更可能です。
 
 ## 5. レピュテーションスコア
+
+### 5.1. 定義
+
+レピュテーションスコアは、Bot が不正なイベントを送信することを防ぐためのシステムです。
+レピュテーションスコアは、各クライアントがそれぞれ計算するため、クライアント同士で同じスコアになるとは限りません。
+
+### 5.2. 表現
+
+レピュテーションスコアは、Bot の ID をキー、浮動小数点数のスコアをバリューとする Key-Value ストアです。
+初期値は 0 です。
+レピュテーションスコアを実際に計算するときは、
+```math
+x' = \sigma(x) = \frac{1}{1 + e^{-x}}
+```
+のようにシグモイド関数を用いて表現します。
+
+### 5.3. 不正の検出
+
+不正を検出した場合、以下のような不正検知イベントを送信する必要があります。
+```ts
+interface ReputationNoticeEvent {
+  type: 'cleaverse.reputation.notice'
+  target: string // 不正行為をした Bot の ID
+  source: ReputationNoticeSource // 不正行為の根拠
+}
+```
+
+### 5.4. 不正の種類
+
+#### 不正な移動スピード
+
+不正な移動の場合、以下のような ReputationNoticeSource になります:
+```ts
+interface ReputationNoticeSource {
+  type: 'cleaverse::world::invalid-speed'
+  target: string // 不正行為をした Bot の ID
+  source: {
+    type: 'cleaverse.world.bot.move'
+    last: Message<BotMoveEvent>
+    now: Message<BotMoveEvent>
+  }
+}
+```
+この場合、レピュテーションスコアは 1 減少します。
